@@ -1,6 +1,6 @@
 import './style.css'
 
-const dishes = [
+const DEFAULT_DISHES = [
   {
     name: 'Ensalada Griega de Quinoa',
     description: 'Quinoa, pepino, tomate, aceitunas Kalamata, queso feta y aliño de limón y hierbas frescas.',
@@ -45,7 +45,55 @@ const dishes = [
   }
 ]
 
+const STORAGE_KEY = 'northwestmad_dishes'
+const ADMIN_KEY = 'northwestmad_admin'
+const ADMIN_PASS = 'northwestmad2026'
+
+const loadDishes = () => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return [...DEFAULT_DISHES]
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) && parsed.length ? parsed : [...DEFAULT_DISHES]
+  } catch { return [...DEFAULT_DISHES] }
+}
+const saveDishes = (dishes) => localStorage.setItem(STORAGE_KEY, JSON.stringify(dishes))
+let dishes = loadDishes()
+let isAdmin = sessionStorage.getItem(ADMIN_KEY) === '1'
+
 const app = document.querySelector('#app')
+
+const renderDishCard = (d, i) => `
+  <article class="dish-card reveal visible" style="--delay:${i * 0.05}s">
+    <div class="dish-img">
+      <img src="${d.img}" alt="${d.name}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=800&q=80'" />
+      <span class="dish-tag">${d.tag || 'Mediterráneo'}</span>
+      ${isAdmin ? `<button class="dish-delete" data-index="${i}" aria-label="Eliminar plato">×</button>` : ''}
+    </div>
+    <div class="dish-body">
+      <div class="dish-top">
+        <h3>${d.name}</h3>
+        <span class="dish-price">${d.price}</span>
+      </div>
+      <p>${d.description}</p>
+    </div>
+  </article>
+`
+
+const renderMenu = () => {
+  const grid = document.getElementById('menuGrid')
+  if (!grid) return
+  grid.innerHTML = dishes.map(renderDishCard).join('')
+  grid.querySelectorAll('.dish-delete').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = Number(btn.dataset.index)
+      dishes.splice(idx, 1)
+      saveDishes(dishes)
+      renderMenu()
+      renderAdminList()
+    })
+  })
+}
 
 app.innerHTML = `
   <div class="cursor-glow" aria-hidden="true"></div>
@@ -62,6 +110,7 @@ app.innerHTML = `
       <a href="#carta">Carta</a>
       <a href="#experiencia">Experiencia</a>
       <a href="#reservas" class="nav-cta">Reservar</a>
+      <button class="nav-admin" id="adminToggle">Admin</button>
     </div>
   </nav>
 
@@ -120,23 +169,7 @@ app.innerHTML = `
         <h2>Platos con <em>carácter</em></h2>
         <p class="section-lead">Una selección de sabores mediterráneos elaborados con técnica, respeto por el producto y un toque contemporáneo.</p>
       </div>
-      <div class="menu-grid">
-        ${dishes.map((d, i) => `
-          <article class="dish-card reveal" style="--delay:${i * 0.08}s">
-            <div class="dish-img">
-              <img src="${d.img}" alt="${d.name}" loading="lazy" />
-              <span class="dish-tag">${d.tag}</span>
-            </div>
-            <div class="dish-body">
-              <div class="dish-top">
-                <h3>${d.name}</h3>
-                <span class="dish-price">${d.price}</span>
-              </div>
-              <p>${d.description}</p>
-            </div>
-          </article>
-        `).join('')}
-      </div>
+      <div class="menu-grid" id="menuGrid"></div>
     </div>
   </section>
 
@@ -225,7 +258,139 @@ app.innerHTML = `
       <span>© ${new Date().getFullYear()} Northwestmad. Todos los derechos reservados.</span>
     </div>
   </footer>
+
+  <div class="admin-modal" id="adminModal" aria-hidden="true">
+    <div class="admin-panel">
+      <div class="admin-head">
+        <div>
+          <p class="eyebrow">Administración</p>
+          <h2>Gestionar <em>carta</em></h2>
+        </div>
+        <button class="admin-close" id="adminClose" aria-label="Cerrar">×</button>
+      </div>
+
+      <div id="adminAuth">
+        <p class="admin-copy">Introduce la contraseña de administrador para añadir o eliminar platos.</p>
+        <form id="adminLoginForm" class="admin-form">
+          <label><span>Contraseña</span><input type="password" name="password" required placeholder="Contraseña" /></label>
+          <button type="submit" class="btn btn-primary btn-full">Entrar</button>
+          <p class="form-note" id="adminLoginNote"></p>
+        </form>
+      </div>
+
+      <div id="adminDashboard" class="admin-hidden">
+        <form id="addDishForm" class="admin-form admin-add">
+          <div class="form-row">
+            <label><span>Nombre</span><input name="name" required placeholder="Nombre del plato" /></label>
+            <label><span>Precio</span><input name="price" required placeholder="18€" /></label>
+          </div>
+          <div class="form-row">
+            <label><span>Etiqueta</span><input name="tag" placeholder="Especialidad" /></label>
+            <label><span>Imagen URL</span><input name="img" required placeholder="https://..." /></label>
+          </div>
+          <label><span>Descripción</span><textarea name="description" required rows="3" placeholder="Descripción del plato"></textarea></label>
+          <div class="admin-actions">
+            <button type="submit" class="btn btn-primary">Añadir plato</button>
+            <button type="button" class="btn btn-muted" id="adminLogout">Cerrar sesión</button>
+          </div>
+          <p class="form-note" id="adminDishNote"></p>
+        </form>
+        <div class="admin-list-wrap">
+          <h3>Platos actuales</h3>
+          <div id="adminList" class="admin-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 `
+
+// Menu render
+renderMenu()
+
+const renderAdminList = () => {
+  const list = document.getElementById('adminList')
+  if (!list) return
+  list.innerHTML = dishes.map((d, i) => `
+    <div class="admin-item">
+      <div><strong>${d.name}</strong><span>${d.price} · ${d.tag || 'Mediterráneo'}</span></div>
+      <button class="admin-del" data-index="${i}">Eliminar</button>
+    </div>
+  `).join('') || '<p class="admin-empty">No hay platos en la carta.</p>'
+  list.querySelectorAll('.admin-del').forEach(btn => btn.addEventListener('click', () => {
+    dishes.splice(Number(btn.dataset.index), 1)
+    saveDishes(dishes)
+    renderMenu()
+    renderAdminList()
+  }))
+}
+
+// Admin
+const adminModal = document.getElementById('adminModal')
+const adminToggle = document.getElementById('adminToggle')
+const adminClose = document.getElementById('adminClose')
+const adminAuth = document.getElementById('adminAuth')
+const adminDashboard = document.getElementById('adminDashboard')
+const adminLoginForm = document.getElementById('adminLoginForm')
+const adminLoginNote = document.getElementById('adminLoginNote')
+const addDishForm = document.getElementById('addDishForm')
+const adminDishNote = document.getElementById('adminDishNote')
+const adminLogout = document.getElementById('adminLogout')
+
+const syncAdmin = () => {
+  adminAuth.classList.toggle('admin-hidden', isAdmin)
+  adminDashboard.classList.toggle('admin-hidden', !isAdmin)
+  adminToggle.textContent = isAdmin ? 'Panel' : 'Admin'
+  renderMenu()
+  renderAdminList()
+}
+const openAdmin = () => { adminModal.classList.add('open'); adminModal.setAttribute('aria-hidden', 'false'); syncAdmin() }
+const closeAdmin = () => { adminModal.classList.remove('open'); adminModal.setAttribute('aria-hidden', 'true'); }
+
+adminToggle.addEventListener('click', openAdmin)
+adminClose.addEventListener('click', closeAdmin)
+adminModal.addEventListener('click', (e) => { if (e.target === adminModal) closeAdmin() })
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAdmin() })
+
+adminLoginForm.addEventListener('submit', (e) => {
+  e.preventDefault()
+  const pass = new FormData(adminLoginForm).get('password')
+  if (pass === ADMIN_PASS) {
+    isAdmin = true
+    sessionStorage.setItem(ADMIN_KEY, '1')
+    adminLoginNote.textContent = ''
+    adminLoginForm.reset()
+    syncAdmin()
+  } else {
+    adminLoginNote.textContent = 'Contraseña incorrecta.'
+    adminLoginNote.classList.add('error')
+  }
+})
+
+addDishForm.addEventListener('submit', (e) => {
+  e.preventDefault()
+  const fd = new FormData(addDishForm)
+  const dish = {
+    name: fd.get('name').trim(),
+    price: fd.get('price').trim(),
+    tag: fd.get('tag').trim() || 'Mediterráneo',
+    img: fd.get('img').trim(),
+    description: fd.get('description').trim()
+  }
+  dishes.unshift(dish)
+  saveDishes(dishes)
+  addDishForm.reset()
+  adminDishNote.textContent = 'Plato añadido a la carta.'
+  adminDishNote.classList.remove('error')
+  adminDishNote.classList.add('success')
+  renderMenu()
+  renderAdminList()
+})
+
+adminLogout.addEventListener('click', () => {
+  isAdmin = false
+  sessionStorage.removeItem(ADMIN_KEY)
+  syncAdmin()
+})
 
 // Navigation
 const nav = document.getElementById('nav')
