@@ -617,8 +617,52 @@ body.admin-open { overflow: hidden; }
 .btn-danger:hover { background: rgba(170,68,68,0.18); }
 .form-note.error { color: #b44; }
 
+.admin-reservas { grid-template-columns: minmax(0, 1fr) minmax(280px, 320px); }
+.admin-calendar-wrap, .admin-booking-wrap { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 24px; min-width: 0; }
+.cal-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.cal-head h3 { margin: 0; font-family: 'Inter', sans-serif; font-size: 1.05rem; font-weight: 600; }
+.cal-sub { margin: 4px 0 0; font-size: 0.78rem; color: var(--muted); }
+.cal-nav { display: flex; gap: 8px; }
+.cal-btn { min-width: 40px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--text); font: inherit; font-size: 0.82rem; cursor: pointer; }
+.cal-btn:hover { border-color: var(--gold); color: var(--gold); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.cal-day { min-height: 240px; display: flex; flex-direction: column; border-right: 1px solid var(--line); }
+.cal-day:last-child { border-right: 0; }
+.cal-day.is-today { background: rgba(184,148,95,0.07); }
+.cal-day-head { display: flex; justify-content: space-between; align-items: baseline; gap: 4px; padding: 10px 8px; border-bottom: 1px solid var(--line); font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.cal-day-head strong { font-size: 1rem; color: var(--text); }
+.cal-day.is-today .cal-day-head strong { color: var(--gold); }
+.cal-day-body { display: flex; flex-direction: column; gap: 6px; flex: 1; padding: 8px; }
+.cal-booking { display: flex; flex-direction: column; gap: 2px; width: 100%; padding: 8px; border: 0; border-left: 3px solid var(--gold); border-radius: 6px; background: rgba(184,148,95,0.12); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.cal-booking strong { font-size: 0.8rem; }
+.cal-booking span { font-size: 0.76rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cal-booking small { font-size: 0.66rem; color: var(--muted); }
+.cal-booking:hover, .cal-booking.selected { background: rgba(184,148,95,0.22); }
+.cal-booking.status-confirmada { border-left-color: #6b8e5a; background: rgba(107,142,90,0.14); }
+.cal-booking.status-cancelada { border-left-color: #a44; background: rgba(170,68,68,0.1); opacity: 0.65; }
+.cal-booking.status-cancelada span { text-decoration: line-through; }
+.cal-empty { font-size: 0.7rem; color: var(--line); }
+.cal-legend { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 16px 0 0; font-size: 0.72rem; color: var(--muted); }
+.legend-dot { width: 9px; height: 9px; border-radius: 50%; margin-left: 10px; }
+.legend-dot:first-child { margin-left: 0; }
+.legend-dot.pending { background: var(--gold); }
+.legend-dot.confirmed { background: #6b8e5a; }
+.legend-dot.cancelled { background: #a44; }
+.booking-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 260px; text-align: center; color: var(--muted); }
+.booking-empty span { font-size: 2rem; color: var(--line); }
+.booking-empty h3 { margin: 0; font-family: 'Inter', sans-serif; font-size: 1rem; color: var(--text); }
+.booking-empty p { margin: 0; font-size: 0.82rem; max-width: 220px; }
+.booking-status { display: inline-block; margin: 0 0 18px; padding: 6px 12px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; background: rgba(184,148,95,0.14); color: var(--gold); }
+.booking-status.status-confirmada { background: rgba(107,142,90,0.14); color: #557344; }
+.booking-status.status-cancelada { background: rgba(170,68,68,0.12); color: #944; }
+.booking-data { display: flex; flex-direction: column; gap: 12px; }
+.booking-data-row { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.booking-data-row span { font-size: 0.78rem; color: var(--muted); }
+.booking-data-row strong { font-family: 'Inter', sans-serif; font-size: 0.85rem; text-align: right; }
+
 @media (max-width: 1180px) {
   .admin-workspace { grid-template-columns: 1fr; }
+  .admin-reservas { grid-template-columns: 1fr; }
   .admin-list { max-height: 380px; }
 }
 @media (max-width: 860px) {
@@ -628,6 +672,8 @@ body.admin-open { overflow: hidden; }
   .admin-nav { flex-direction: row; margin: 0; }
   .admin-sidebar-foot { margin: 0 0 0 auto; flex-direction: row; padding: 0; border: 0; }
   .admin-main { padding: 28px 20px 48px; }
+  .admin-calendar-wrap { overflow-x: auto; }
+  .cal-grid { min-width: 700px; }
 }
 @media (max-width: 640px) {
   .admin-login-card { padding: 32px 24px; }
