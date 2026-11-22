@@ -592,6 +592,14 @@ body.admin-open { overflow: hidden; }
   background: rgba(250,248,244,0.92); color: var(--olive);
   font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
 }
+.admin-file-hint { margin: -10px 0 18px; font-size: 0.75rem; color: var(--muted); }
+.admin-file-field input[type="file"] { padding: 10px 12px; font-size: 0.82rem; }
+.admin-file-field input[type="file"]::file-selector-button {
+  margin-right: 12px; padding: 8px 14px; border: 0; border-radius: 8px;
+  background: rgba(184,148,95,0.16); color: var(--olive);
+  font: inherit; font-weight: 600; cursor: pointer;
+}
+.admin-file-field input[type="file"]::file-selector-button:hover { background: rgba(184,148,95,0.26); }
 .admin-form input, .admin-form textarea {
   width: 100%; padding: 14px 16px; border-radius: 12px;
   border: 1px solid rgba(29,42,38,0.12); background: #fff; color: var(--text); font-size: 0.95rem;

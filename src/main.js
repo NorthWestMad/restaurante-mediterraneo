@@ -356,15 +356,16 @@ app.innerHTML = `
               </div>
               <div class="admin-img-preview">
                 <img id="imgPreview" src="${FALLBACK_IMG}" alt="Vista previa del plato" onerror="this.src='${FALLBACK_IMG}'" />
-                <span>Vista previa</span>
+                <span id="previewLabel">Vista previa</span>
               </div>
+              <p class="admin-file-hint">JPG, PNG o WebP · la foto se comprime automáticamente</p>
               <div class="form-row">
                 <label><span>Nombre</span><input name="name" required placeholder="Nombre del plato" /></label>
                 <label><span>Precio</span><input name="price" required placeholder="18€" /></label>
               </div>
               <div class="form-row">
                 <label><span>Etiqueta</span><input name="tag" placeholder="Especialidad" /></label>
-                <label><span>Imagen URL</span><input name="img" required placeholder="https://..." /></label>
+                <label class="admin-file-field"><span>Foto del plato</span><input type="file" name="imageFile" id="imageFile" accept="image/*" /></label>
               </div>
               <label><span>Descripción</span><textarea name="description" required rows="3" placeholder="Descripción del plato"></textarea></label>
               <label><span>Ingredientes <small>(separados por comas)</small></span><textarea name="ingredients" rows="2" placeholder="Tomate, aceite de oliva, albahaca"></textarea></label>
@@ -473,25 +474,67 @@ const newDishTop = document.getElementById('newDishTop')
 const newDishNav = document.getElementById('newDishNav')
 const dishSearch = document.getElementById('dishSearch')
 const imgPreview = document.getElementById('imgPreview')
+const previewLabel = document.getElementById('previewLabel')
+const imageFile = document.getElementById('imageFile')
 const field = (name) => dishForm.elements.namedItem(name)
 
 let editingIndex = null
+let currentImage = ''
 
-const syncPreview = () => { imgPreview.src = field('img').value.trim() || FALLBACK_IMG }
-field('img').addEventListener('input', syncPreview)
+const syncPreview = () => { imgPreview.src = currentImage || FALLBACK_IMG }
 
 const setNote = (message, type = '') => {
   adminDishNote.textContent = message
   adminDishNote.className = `form-note${type ? ` ${type}` : ''}`
 }
 
+const compressImage = (file) => new Promise((resolve, reject) => {
+  if (!file.type.startsWith('image/')) { reject(new Error('El archivo debe ser una imagen.')); return }
+  const reader = new FileReader()
+  reader.onerror = () => reject(new Error('No se pudo leer el archivo.'))
+  reader.onload = () => {
+    const img = new Image()
+    img.onerror = () => reject(new Error('No se pudo abrir la imagen.'))
+    img.onload = () => {
+      const scale = Math.min(1, 1200 / Math.max(img.width, img.height))
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.max(1, Math.round(img.width * scale))
+      canvas.height = Math.max(1, Math.round(img.height * scale))
+      const ctx = canvas.getContext('2d')
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+      resolve(canvas.toDataURL('image/jpeg', 0.8))
+    }
+    img.src = reader.result
+  }
+  reader.readAsDataURL(file)
+})
+
+imageFile.addEventListener('change', async () => {
+  const file = imageFile.files?.[0]
+  if (!file) return
+  if (file.size > 20 * 1024 * 1024) { setNote('La imagen es demasiado grande (máx. 20 MB).', 'error'); return }
+  setNote('Procesando imagen...')
+  try {
+    currentImage = await compressImage(file)
+    syncPreview()
+    previewLabel.textContent = file.name
+    setNote('Foto lista. Guarda el plato para aplicarla.', 'success')
+  } catch (err) {
+    setNote(err.message, 'error')
+  }
+})
+
 const resetEditor = () => {
   editingIndex = null
+  currentImage = ''
   dishForm.reset()
   editorTitle.textContent = 'Añadir plato'
   saveDishBtn.textContent = 'Añadir plato'
   cancelEdit.classList.add('admin-hidden')
   deleteCurrent.classList.add('admin-hidden')
+  previewLabel.textContent = 'Vista previa'
   syncPreview()
   setNote('')
   renderAdminList()
@@ -505,7 +548,9 @@ const openDishEditor = (index) => {
   field('name').value = d.name || ''
   field('price').value = d.price || ''
   field('tag').value = d.tag || ''
-  field('img').value = d.img || ''
+  currentImage = d.img || FALLBACK_IMG
+  imageFile.value = ''
+  previewLabel.textContent = 'Foto actual'
   field('description').value = d.description || ''
   field('ingredients').value = d.ingredients.join(', ')
   field('allergens').value = d.allergens.join(', ')
@@ -581,15 +626,24 @@ dishForm.addEventListener('submit', (e) => {
     name: fd.get('name').trim(),
     price: fd.get('price').trim(),
     tag: fd.get('tag').trim() || 'Mediterráneo',
-    img: fd.get('img').trim(),
+    img: currentImage || FALLBACK_IMG,
     description: fd.get('description').trim(),
     ingredients: splitList(fd.get('ingredients')),
     allergens: splitList(fd.get('allergens'))
   })
   const wasEditing = editingIndex !== null
+  const previousDish = wasEditing ? dishes[editingIndex] : null
   if (wasEditing) dishes[editingIndex] = dish
   else dishes.unshift(dish)
-  saveDishes(dishes)
+  try {
+    saveDishes(dishes)
+  } catch {
+    if (wasEditing) dishes[editingIndex] = previousDish
+    else dishes.shift()
+    setNote('No hay espacio para guardar la foto. Prueba con una imagen más pequeña.', 'error')
+    renderMenu()
+    return
+  }
   resetEditor()
   setNote(wasEditing ? 'Cambios guardados.' : 'Plato añadido a la carta.', 'success')
   renderMenu()
