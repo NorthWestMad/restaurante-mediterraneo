@@ -59,6 +59,7 @@ const DEFAULT_DISHES = [
 
 const STORAGE_KEY = 'northwestmad_dishes'
 const BOOKINGS_KEY = 'northwestmad_bookings'
+const BOOKINGS_SEED_KEY = 'northwestmad_bookings_seeded'
 const ADMIN_KEY = 'northwestmad_admin'
 const ADMIN_PASS = 'northwestmad2026'
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=800&q=80'
@@ -86,7 +87,14 @@ const loadBookings = () => {
   try {
     const raw = localStorage.getItem(BOOKINGS_KEY)
     const parsed = raw ? JSON.parse(raw) : []
-    return Array.isArray(parsed) ? parsed.filter(b => b && b.date && b.time) : []
+    const stored = Array.isArray(parsed) ? parsed.filter(b => b && b.date && b.time) : []
+    const weekKey = toISO(startOfWeek(new Date()))
+    if (localStorage.getItem(BOOKINGS_SEED_KEY) === weekKey) return stored
+    const samples = buildSampleBookings()
+    const merged = [...stored.filter(b => !String(b.id).startsWith('demo-')), ...samples]
+    localStorage.setItem(BOOKINGS_KEY, JSON.stringify(merged))
+    localStorage.setItem(BOOKINGS_SEED_KEY, weekKey)
+    return merged
   } catch { return [] }
 }
 const saveBookings = (list) => localStorage.setItem(BOOKINGS_KEY, JSON.stringify(list))
@@ -99,6 +107,24 @@ const startOfWeek = (date) => {
 }
 const WEEKDAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+const SAMPLE_BOOKINGS = [
+  { day: 0, time: '13:30', name: 'Lucía Martín', phone: '+34 611 204 318', guests: '2 personas', occasion: 'Cena casual', status: 'confirmada' },
+  { day: 0, time: '21:00', name: 'Javier Ruiz', phone: '+34 622 415 907', guests: '4 personas', occasion: 'Celebración', status: 'pendiente' },
+  { day: 1, time: '20:30', name: 'Marta Solís', phone: '+34 633 708 126', guests: '2 personas', occasion: 'Cita especial', status: 'confirmada' },
+  { day: 2, time: '14:00', name: 'Familia Ortega', phone: '+34 644 912 530', guests: '6+ personas', occasion: 'Comida de empresa', status: 'confirmada' },
+  { day: 3, time: '22:00', name: 'Carlos Vidal', phone: '+34 655 331 784', guests: '3 personas', occasion: 'Cena casual', status: 'pendiente' },
+  { day: 4, time: '20:00', name: 'Elena Prats', phone: '+34 666 820 415', guests: '2 personas', occasion: 'Cita especial', status: 'confirmada' },
+  { day: 5, time: '21:30', name: 'Sofía Navarro', phone: '+34 677 145 882', guests: '5 personas', occasion: 'Celebración', status: 'confirmada' },
+  { day: 6, time: '13:00', name: 'Diego Ferrer', phone: '+34 688 503 219', guests: '4 personas', occasion: 'Cena casual', status: 'cancelada' },
+  { day: 6, time: '20:45', name: 'Ana Beltrán', phone: '+34 699 274 606', guests: '2 personas', occasion: 'Cena casual', status: 'pendiente' }
+]
+const buildSampleBookings = () => {
+  const monday = startOfWeek(new Date())
+  return SAMPLE_BOOKINGS.map(({ day, ...b }, i) => {
+    const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + day)
+    return { ...b, id: `demo-${i + 1}`, date: toISO(d), createdAt: new Date().toISOString() }
+  })
+}
 
 let dishes = loadDishes()
 let bookings = loadBookings()
