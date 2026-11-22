@@ -471,19 +471,6 @@ em { font-style: italic; color: var(--gold-soft); }
 }
 
 /* Admin */
-.nav-admin {
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: rgba(255,255,255,0.7);
-  padding: 8px 14px;
-  border: 1px solid rgba(255,255,255,0.25);
-  border-radius: 999px;
-  transition: all 0.3s ease;
-}
-.nav.scrolled .nav-admin { color: var(--muted); border-color: var(--line); }
-.nav-admin:hover { color: #fff; border-color: rgba(255,255,255,0.6); }
-.nav.scrolled .nav-admin:hover { color: var(--olive); border-color: var(--olive); }
-
 .dish-delete {
   position: absolute; top: 16px; right: 16px;
   width: 34px; height: 34px; border-radius: 50%;

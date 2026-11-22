@@ -110,7 +110,6 @@ app.innerHTML = `
       <a href="#carta">Carta</a>
       <a href="#experiencia">Experiencia</a>
       <a href="#reservas" class="nav-cta">Reservar</a>
-      <button class="nav-admin" id="adminToggle">Admin</button>
     </div>
   </nav>
 
@@ -326,7 +325,6 @@ const renderAdminList = () => {
 
 // Admin
 const adminModal = document.getElementById('adminModal')
-const adminToggle = document.getElementById('adminToggle')
 const adminClose = document.getElementById('adminClose')
 const adminAuth = document.getElementById('adminAuth')
 const adminDashboard = document.getElementById('adminDashboard')
@@ -339,17 +337,26 @@ const adminLogout = document.getElementById('adminLogout')
 const syncAdmin = () => {
   adminAuth.classList.toggle('admin-hidden', isAdmin)
   adminDashboard.classList.toggle('admin-hidden', !isAdmin)
-  adminToggle.textContent = isAdmin ? 'Panel' : 'Admin'
   renderMenu()
   renderAdminList()
 }
 const openAdmin = () => { adminModal.classList.add('open'); adminModal.setAttribute('aria-hidden', 'false'); syncAdmin() }
-const closeAdmin = () => { adminModal.classList.remove('open'); adminModal.setAttribute('aria-hidden', 'true'); }
+const closeAdmin = () => {
+  adminModal.classList.remove('open')
+  adminModal.setAttribute('aria-hidden', 'true')
+  if (window.location.hash === '#admin') history.replaceState(null, '', location.pathname + location.search)
+}
 
-adminToggle.addEventListener('click', openAdmin)
 adminClose.addEventListener('click', closeAdmin)
 adminModal.addEventListener('click', (e) => { if (e.target === adminModal) closeAdmin() })
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAdmin() })
+
+const syncAdminRoute = () => {
+  if (window.location.hash === '#admin') openAdmin()
+  else if (adminModal.classList.contains('open')) closeAdmin()
+}
+window.addEventListener('hashchange', syncAdminRoute)
+syncAdminRoute()
 
 adminLoginForm.addEventListener('submit', (e) => {
   e.preventDefault()
