@@ -297,7 +297,7 @@ app.innerHTML = `
     <div class="detail-panel" id="dishDetail"></div>
   </div>
 
-  <section class="admin-app admin-hidden" id="adminApp" aria-hidden="true">
+  <section class="admin-app" id="adminApp" aria-hidden="true">
     <div class="admin-login" id="adminAuth">
       <div class="admin-login-card">
         <span class="brand-mark">A</span>
