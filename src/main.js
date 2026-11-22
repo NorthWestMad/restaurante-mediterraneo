@@ -6,56 +6,79 @@ const DEFAULT_DISHES = [
     description: 'Quinoa, pepino, tomate, aceitunas Kalamata, queso feta y aliño de limón y hierbas frescas.',
     price: '14€',
     tag: 'Fresco',
-    img: 'https://www.themealdb.com/images/media/meals/k29viq1585565980.jpg'
+    img: 'https://www.themealdb.com/images/media/meals/k29viq1585565980.jpg',
+    ingredients: ['Quinoa', 'Pepino', 'Tomate', 'Aceitunas Kalamata', 'Queso feta', 'Limón', 'Hierbas frescas'],
+    allergens: ['Lácteos']
   },
   {
     name: 'Garides Saganaki',
     description: 'Langostinos salteados en salsa de tomate especiada con feta fundido y un toque de ouzo.',
     price: '18€',
     tag: 'Especialidad',
-    img: 'https://www.themealdb.com/images/media/meals/wuvryu1468232995.jpg'
+    img: 'https://www.themealdb.com/images/media/meals/wuvryu1468232995.jpg',
+    ingredients: ['Langostinos', 'Tomate', 'Queso feta', 'Ouzo', 'Especias', 'Aceite de oliva'],
+    allergens: ['Crustáceos', 'Lácteos', 'Sulfitos']
   },
   {
     name: 'Lamb Tagine Marroquí',
     description: 'Cordero cocinado a fuego lento con albaricoques, especias dulces y cuscús esponjoso.',
     price: '22€',
     tag: 'De la casa',
-    img: 'https://www.themealdb.com/images/media/meals/yuwtuu1511295751.jpg'
+    img: 'https://www.themealdb.com/images/media/meals/yuwtuu1511295751.jpg',
+    ingredients: ['Cordero', 'Albaricoques', 'Cuscús', 'Comino', 'Canela', 'Cúrcuma'],
+    allergens: ['Gluten']
   },
   {
     name: 'Fettuccine Alfredo',
     description: 'Pasta fresca artesanal con crema de parmesano, mantequilla y pimienta negra recién molida.',
     price: '16€',
     tag: 'Clásico',
-    img: 'https://www.themealdb.com/images/media/meals/0jv5gx1661040802.jpg'
+    img: 'https://www.themealdb.com/images/media/meals/0jv5gx1661040802.jpg',
+    ingredients: ['Pasta fresca', 'Parmesano', 'Mantequilla', 'Nata', 'Pimienta negra'],
+    allergens: ['Gluten', 'Lácteos', 'Huevo']
   },
   {
     name: 'Gigantes Plaki',
     description: 'Alubias gigantes al horno en salsa de tomate, eneldo y aceite de oliva virgen extra.',
     price: '15€',
     tag: 'Vegetariano',
-    img: 'https://www.themealdb.com/images/media/meals/b79r6f1585566277.jpg'
+    img: 'https://www.themealdb.com/images/media/meals/b79r6f1585566277.jpg',
+    ingredients: ['Alubias gigantes', 'Tomate', 'Eneldo', 'Cebolla', 'Aceite de oliva virgen extra'],
+    allergens: []
   },
   {
     name: 'Honey Yogurt Cheesecake',
     description: 'Tarta cremosa de yogur griego con miel de tomillo, nueces y base crujiente.',
     price: '9€',
     tag: 'Postre',
-    img: 'https://www.themealdb.com/images/media/meals/y2irzl1585563479.jpg'
+    img: 'https://www.themealdb.com/images/media/meals/y2irzl1585563479.jpg',
+    ingredients: ['Yogur griego', 'Miel de tomillo', 'Nueces', 'Base de galleta', 'Huevo'],
+    allergens: ['Lácteos', 'Frutos secos', 'Gluten', 'Huevo']
   }
 ]
 
 const STORAGE_KEY = 'northwestmad_dishes'
 const ADMIN_KEY = 'northwestmad_admin'
 const ADMIN_PASS = 'northwestmad2026'
+const FALLBACK_IMG = 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=800&q=80'
+const esc = (value) => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+const splitList = (value) => Array.isArray(value)
+  ? value
+  : typeof value === 'string' ? value.split(',').map(s => s.trim()).filter(Boolean) : []
+const normalizeDish = (d) => ({
+  ...d,
+  tag: d.tag || 'Mediterráneo',
+  ingredients: splitList(d.ingredients),
+  allergens: splitList(d.allergens)
+})
 
 const loadDishes = () => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return [...DEFAULT_DISHES]
+    if (!raw) return DEFAULT_DISHES.map(normalizeDish)
     const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) && parsed.length ? parsed : [...DEFAULT_DISHES]
-  } catch { return [...DEFAULT_DISHES] }
+    return Array.isArray(parsed) && parsed.length ? parsed.map(normalizeDish) : DEFAULT_DISHES.map(normalizeDish)
+  } catch { return DEFAULT_DISHES.map(normalizeDish) }
 }
 const saveDishes = (dishes) => localStorage.setItem(STORAGE_KEY, JSON.stringify(dishes))
 let dishes = loadDishes()
@@ -64,18 +87,24 @@ let isAdmin = sessionStorage.getItem(ADMIN_KEY) === '1'
 const app = document.querySelector('#app')
 
 const renderDishCard = (d, i) => `
-  <article class="dish-card reveal visible" style="--delay:${i * 0.05}s">
+  <article class="dish-card reveal visible" data-index="${i}" role="button" tabindex="0" aria-label="Ver ficha de ${esc(d.name)}" style="--delay:${i * 0.05}s">
     <div class="dish-img">
-      <img src="${d.img}" alt="${d.name}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=800&q=80'" />
-      <span class="dish-tag">${d.tag || 'Mediterráneo'}</span>
-      ${isAdmin ? `<button class="dish-delete" data-index="${i}" aria-label="Eliminar plato">×</button>` : ''}
+      <img src="${esc(d.img)}" alt="${esc(d.name)}" loading="lazy" onerror="this.src='${FALLBACK_IMG}'" />
+      <span class="dish-tag">${esc(d.tag)}</span>
+      ${isAdmin ? `
+        <div class="dish-tools">
+          <button class="dish-tool dish-edit" data-index="${i}" aria-label="Editar ${esc(d.name)}" title="Editar plato">✎</button>
+          <button class="dish-tool dish-delete" data-index="${i}" aria-label="Eliminar ${esc(d.name)}" title="Eliminar plato">×</button>
+        </div>` : ''}
     </div>
     <div class="dish-body">
       <div class="dish-top">
-        <h3>${d.name}</h3>
-        <span class="dish-price">${d.price}</span>
+        <h3>${esc(d.name)}</h3>
+        <span class="dish-price">${esc(d.price)}</span>
       </div>
-      <p>${d.description}</p>
+      <p>${esc(d.description)}</p>
+      ${d.ingredients.length ? `<p class="dish-ingredients"><span>Ingredientes</span> ${esc(d.ingredients.slice(0, 4).join(' · '))}${d.ingredients.length > 4 ? ' · …' : ''}</p>` : ''}
+      <span class="dish-view">Ver ficha <span aria-hidden="true">→</span></span>
     </div>
   </article>
 `
@@ -84,15 +113,21 @@ const renderMenu = () => {
   const grid = document.getElementById('menuGrid')
   if (!grid) return
   grid.innerHTML = dishes.map(renderDishCard).join('')
-  grid.querySelectorAll('.dish-delete').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const idx = Number(btn.dataset.index)
-      dishes.splice(idx, 1)
-      saveDishes(dishes)
-      renderMenu()
-      renderAdminList()
+  grid.querySelectorAll('.dish-card').forEach(card => {
+    const open = () => isAdmin ? openDishEditor(Number(card.dataset.index)) : openDishDetail(Number(card.dataset.index))
+    card.addEventListener('click', open)
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open() }
     })
   })
+  grid.querySelectorAll('.dish-edit').forEach(btn => btn.addEventListener('click', (e) => {
+    e.stopPropagation()
+    openDishEditor(Number(btn.dataset.index))
+  }))
+  grid.querySelectorAll('.dish-delete').forEach(btn => btn.addEventListener('click', (e) => {
+    e.stopPropagation()
+    deleteDish(Number(btn.dataset.index))
+  }))
 }
 
 app.innerHTML = `
@@ -258,6 +293,10 @@ app.innerHTML = `
     </div>
   </footer>
 
+  <div class="detail-modal" id="dishModal" aria-hidden="true">
+    <div class="detail-panel" id="dishDetail"></div>
+  </div>
+
   <div class="admin-modal" id="adminModal" aria-hidden="true">
     <div class="admin-panel">
       <div class="admin-head">
@@ -278,7 +317,15 @@ app.innerHTML = `
       </div>
 
       <div id="adminDashboard" class="admin-hidden">
-        <form id="addDishForm" class="admin-form admin-add">
+        <form id="dishForm" class="admin-form admin-add">
+          <div class="admin-editor-head">
+            <h3 id="editorTitle">Añadir plato</h3>
+            <button type="button" class="btn-muted btn-small admin-hidden" id="cancelEdit">Cancelar edición</button>
+          </div>
+          <div class="admin-img-preview">
+            <img id="imgPreview" src="${FALLBACK_IMG}" alt="Vista previa del plato" onerror="this.src='${FALLBACK_IMG}'" />
+            <span>Vista previa</span>
+          </div>
           <div class="form-row">
             <label><span>Nombre</span><input name="name" required placeholder="Nombre del plato" /></label>
             <label><span>Precio</span><input name="price" required placeholder="18€" /></label>
@@ -288,20 +335,63 @@ app.innerHTML = `
             <label><span>Imagen URL</span><input name="img" required placeholder="https://..." /></label>
           </div>
           <label><span>Descripción</span><textarea name="description" required rows="3" placeholder="Descripción del plato"></textarea></label>
+          <label><span>Ingredientes <small>(separados por comas)</small></span><textarea name="ingredients" rows="2" placeholder="Tomate, aceite de oliva, albahaca"></textarea></label>
+          <label><span>Alergias <small>(separadas por comas)</small></span><input name="allergens" placeholder="Gluten, lácteos, frutos secos" /></label>
           <div class="admin-actions">
-            <button type="submit" class="btn btn-primary">Añadir plato</button>
+            <button type="submit" class="btn btn-primary" id="saveDish">Añadir plato</button>
+            <button type="button" class="btn-danger admin-hidden" id="deleteCurrent">Eliminar plato</button>
             <button type="button" class="btn btn-muted" id="adminLogout">Cerrar sesión</button>
           </div>
           <p class="form-note" id="adminDishNote"></p>
         </form>
         <div class="admin-list-wrap">
-          <h3>Platos actuales</h3>
+          <h3>Platos actuales <span class="admin-hint">Pulsa un plato para editarlo</span></h3>
           <div id="adminList" class="admin-list"></div>
         </div>
       </div>
     </div>
   </div>
 `
+
+// Dish detail
+const dishModal = document.getElementById('dishModal')
+const dishDetail = document.getElementById('dishDetail')
+const chips = (items, cls) => items.map(item => `<span class="${cls}">${esc(item)}</span>`).join('')
+
+const closeDishDetail = () => {
+  dishModal.classList.remove('open')
+  dishModal.setAttribute('aria-hidden', 'true')
+}
+
+const openDishDetail = (index) => {
+  const d = dishes[index]
+  if (!d) return
+  dishDetail.innerHTML = `
+    <button class="admin-close detail-close" id="detailClose" aria-label="Cerrar">×</button>
+    <div class="detail-img"><img src="${esc(d.img)}" alt="${esc(d.name)}" onerror="this.src='${FALLBACK_IMG}'" /></div>
+    <div class="detail-body">
+      <p class="eyebrow">${esc(d.tag)}</p>
+      <h2>${esc(d.name)}</h2>
+      <div class="detail-price">${esc(d.price)}</div>
+      <p class="detail-description">${esc(d.description)}</p>
+      <div class="detail-section">
+        <h3>Ingredientes</h3>
+        <div class="chips">${d.ingredients.length ? chips(d.ingredients, 'chip') : '<p class="admin-empty">Sin ingredientes especificados.</p>'}</div>
+      </div>
+      <div class="detail-section">
+        <h3>Alergias</h3>
+        <div class="chips">${d.allergens.length ? chips(d.allergens, 'chip chip-alert') : '<span class="chip chip-ok">Sin alérgenos declarados</span>'}</div>
+      </div>
+      ${isAdmin ? '<button type="button" class="btn btn-primary" id="detailEdit">Editar plato</button>' : ''}
+    </div>
+  `
+  dishModal.classList.add('open')
+  dishModal.setAttribute('aria-hidden', 'false')
+  document.getElementById('detailClose').addEventListener('click', closeDishDetail)
+  const editBtn = document.getElementById('detailEdit')
+  if (editBtn) editBtn.addEventListener('click', () => { closeDishDetail(); openDishEditor(index) })
+}
+dishModal.addEventListener('click', (e) => { if (e.target === dishModal) closeDishDetail() })
 
 // Menu render
 renderMenu()
@@ -311,16 +401,19 @@ const renderAdminList = () => {
   if (!list) return
   list.innerHTML = dishes.map((d, i) => `
     <div class="admin-item">
-      <div><strong>${d.name}</strong><span>${d.price} · ${d.tag || 'Mediterráneo'}</span></div>
-      <button class="admin-del" data-index="${i}">Eliminar</button>
+      <button type="button" class="admin-item-main" data-index="${i}">
+        <strong>${esc(d.name)}</strong>
+        <span>${esc(d.price)} · ${esc(d.tag)}</span>
+        <span class="admin-item-detail">${d.allergens.length ? `Alergias: ${esc(d.allergens.join(', '))}` : 'Sin alérgenos declarados'}</span>
+      </button>
+      <div class="admin-item-actions">
+        <button type="button" class="admin-edit" data-index="${i}">Editar</button>
+        <button type="button" class="admin-del" data-index="${i}">Eliminar</button>
+      </div>
     </div>
   `).join('') || '<p class="admin-empty">No hay platos en la carta.</p>'
-  list.querySelectorAll('.admin-del').forEach(btn => btn.addEventListener('click', () => {
-    dishes.splice(Number(btn.dataset.index), 1)
-    saveDishes(dishes)
-    renderMenu()
-    renderAdminList()
-  }))
+  list.querySelectorAll('.admin-item-main, .admin-edit').forEach(btn => btn.addEventListener('click', () => openDishEditor(Number(btn.dataset.index))))
+  list.querySelectorAll('.admin-del').forEach(btn => btn.addEventListener('click', () => deleteDish(Number(btn.dataset.index))))
 }
 
 // Admin
@@ -330,13 +423,81 @@ const adminAuth = document.getElementById('adminAuth')
 const adminDashboard = document.getElementById('adminDashboard')
 const adminLoginForm = document.getElementById('adminLoginForm')
 const adminLoginNote = document.getElementById('adminLoginNote')
-const addDishForm = document.getElementById('addDishForm')
+const dishForm = document.getElementById('dishForm')
+const editorTitle = document.getElementById('editorTitle')
+const saveDishBtn = document.getElementById('saveDish')
+const cancelEdit = document.getElementById('cancelEdit')
+const deleteCurrent = document.getElementById('deleteCurrent')
 const adminDishNote = document.getElementById('adminDishNote')
 const adminLogout = document.getElementById('adminLogout')
+const imgPreview = document.getElementById('imgPreview')
+const field = (name) => dishForm.elements.namedItem(name)
+
+let editingIndex = null
+
+const syncPreview = () => { imgPreview.src = field('img').value.trim() || FALLBACK_IMG }
+field('img').addEventListener('input', syncPreview)
+
+const setNote = (message, type = '') => {
+  adminDishNote.textContent = message
+  adminDishNote.className = `form-note${type ? ` ${type}` : ''}`
+}
+
+const resetEditor = () => {
+  editingIndex = null
+  dishForm.reset()
+  editorTitle.textContent = 'Añadir plato'
+  saveDishBtn.textContent = 'Añadir plato'
+  cancelEdit.classList.add('admin-hidden')
+  deleteCurrent.classList.add('admin-hidden')
+  syncPreview()
+  setNote('')
+}
+
+const openDishEditor = (index) => {
+  if (!isAdmin) return
+  const d = dishes[index]
+  if (!d) return
+  editingIndex = index
+  field('name').value = d.name || ''
+  field('price').value = d.price || ''
+  field('tag').value = d.tag || ''
+  field('img').value = d.img || ''
+  field('description').value = d.description || ''
+  field('ingredients').value = d.ingredients.join(', ')
+  field('allergens').value = d.allergens.join(', ')
+  editorTitle.textContent = `Editar: ${d.name}`
+  saveDishBtn.textContent = 'Guardar cambios'
+  cancelEdit.classList.remove('admin-hidden')
+  deleteCurrent.classList.remove('admin-hidden')
+  setNote('')
+  syncPreview()
+  if (!adminModal.classList.contains('open')) openAdmin()
+  dishForm.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  field('name').focus({ preventScroll: true })
+}
+
+const deleteDish = (index) => {
+  const d = dishes[index]
+  if (!d || !isAdmin) return
+  if (!window.confirm(`¿Eliminar "${d.name}" de la carta?`)) return
+  dishes.splice(index, 1)
+  saveDishes(dishes)
+  if (editingIndex === index) {
+    resetEditor()
+    setNote('Plato eliminado.', 'success')
+  } else {
+    if (editingIndex !== null && index < editingIndex) editingIndex -= 1
+    setNote('Plato eliminado.', 'success')
+  }
+  renderMenu()
+  renderAdminList()
+}
 
 const syncAdmin = () => {
   adminAuth.classList.toggle('admin-hidden', isAdmin)
   adminDashboard.classList.toggle('admin-hidden', !isAdmin)
+  if (!isAdmin) resetEditor()
   renderMenu()
   renderAdminList()
 }
@@ -349,7 +510,11 @@ const closeAdmin = () => {
 
 adminClose.addEventListener('click', closeAdmin)
 adminModal.addEventListener('click', (e) => { if (e.target === adminModal) closeAdmin() })
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAdmin() })
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return
+  if (dishModal.classList.contains('open')) closeDishDetail()
+  else closeAdmin()
+})
 
 const syncAdminRoute = () => {
   if (window.location.hash === '#admin') openAdmin()
@@ -373,25 +538,30 @@ adminLoginForm.addEventListener('submit', (e) => {
   }
 })
 
-addDishForm.addEventListener('submit', (e) => {
+dishForm.addEventListener('submit', (e) => {
   e.preventDefault()
-  const fd = new FormData(addDishForm)
-  const dish = {
+  const fd = new FormData(dishForm)
+  const dish = normalizeDish({
     name: fd.get('name').trim(),
     price: fd.get('price').trim(),
     tag: fd.get('tag').trim() || 'Mediterráneo',
     img: fd.get('img').trim(),
-    description: fd.get('description').trim()
-  }
-  dishes.unshift(dish)
+    description: fd.get('description').trim(),
+    ingredients: splitList(fd.get('ingredients')),
+    allergens: splitList(fd.get('allergens'))
+  })
+  const wasEditing = editingIndex !== null
+  if (wasEditing) dishes[editingIndex] = dish
+  else dishes.unshift(dish)
   saveDishes(dishes)
-  addDishForm.reset()
-  adminDishNote.textContent = 'Plato añadido a la carta.'
-  adminDishNote.classList.remove('error')
-  adminDishNote.classList.add('success')
+  resetEditor()
+  setNote(wasEditing ? 'Cambios guardados.' : 'Plato añadido a la carta.', 'success')
   renderMenu()
   renderAdminList()
 })
+
+cancelEdit.addEventListener('click', () => { resetEditor(); dishForm.scrollIntoView({ behavior: 'smooth', block: 'start' }) })
+deleteCurrent.addEventListener('click', () => { if (editingIndex !== null) deleteDish(editingIndex) })
 
 adminLogout.addEventListener('click', () => {
   isAdmin = false
