@@ -297,60 +297,89 @@ app.innerHTML = `
     <div class="detail-panel" id="dishDetail"></div>
   </div>
 
-  <div class="admin-modal" id="adminModal" aria-hidden="true">
-    <div class="admin-panel">
-      <div class="admin-head">
-        <div>
-          <p class="eyebrow">Administración</p>
-          <h2>Gestionar <em>carta</em></h2>
-        </div>
-        <button class="admin-close" id="adminClose" aria-label="Cerrar">×</button>
-      </div>
-
-      <div id="adminAuth">
-        <p class="admin-copy">Introduce la contraseña de administrador para añadir o eliminar platos.</p>
+  <section class="admin-app admin-hidden" id="adminApp" aria-hidden="true">
+    <div class="admin-login" id="adminAuth">
+      <div class="admin-login-card">
+        <span class="brand-mark">A</span>
+        <p class="eyebrow">Área privada</p>
+        <h2>Acceso a <em>gestión</em></h2>
+        <p class="admin-copy">Introduce la contraseña para administrar la carta del restaurante.</p>
         <form id="adminLoginForm" class="admin-form">
-          <label><span>Contraseña</span><input type="password" name="password" required placeholder="Contraseña" /></label>
-          <button type="submit" class="btn btn-primary btn-full">Entrar</button>
+          <label><span>Contraseña</span><input type="password" name="password" required placeholder="Contraseña" autocomplete="current-password" /></label>
+          <button type="submit" class="btn btn-primary btn-full">Entrar al panel</button>
           <p class="form-note" id="adminLoginNote"></p>
         </form>
-      </div>
-
-      <div id="adminDashboard" class="admin-hidden">
-        <form id="dishForm" class="admin-form admin-add">
-          <div class="admin-editor-head">
-            <h3 id="editorTitle">Añadir plato</h3>
-            <button type="button" class="btn-muted btn-small admin-hidden" id="cancelEdit">Cancelar edición</button>
-          </div>
-          <div class="admin-img-preview">
-            <img id="imgPreview" src="${FALLBACK_IMG}" alt="Vista previa del plato" onerror="this.src='${FALLBACK_IMG}'" />
-            <span>Vista previa</span>
-          </div>
-          <div class="form-row">
-            <label><span>Nombre</span><input name="name" required placeholder="Nombre del plato" /></label>
-            <label><span>Precio</span><input name="price" required placeholder="18€" /></label>
-          </div>
-          <div class="form-row">
-            <label><span>Etiqueta</span><input name="tag" placeholder="Especialidad" /></label>
-            <label><span>Imagen URL</span><input name="img" required placeholder="https://..." /></label>
-          </div>
-          <label><span>Descripción</span><textarea name="description" required rows="3" placeholder="Descripción del plato"></textarea></label>
-          <label><span>Ingredientes <small>(separados por comas)</small></span><textarea name="ingredients" rows="2" placeholder="Tomate, aceite de oliva, albahaca"></textarea></label>
-          <label><span>Alergias <small>(separadas por comas)</small></span><input name="allergens" placeholder="Gluten, lácteos, frutos secos" /></label>
-          <div class="admin-actions">
-            <button type="submit" class="btn btn-primary" id="saveDish">Añadir plato</button>
-            <button type="button" class="btn-danger admin-hidden" id="deleteCurrent">Eliminar plato</button>
-            <button type="button" class="btn btn-muted" id="adminLogout">Cerrar sesión</button>
-          </div>
-          <p class="form-note" id="adminDishNote"></p>
-        </form>
-        <div class="admin-list-wrap">
-          <h3>Platos actuales <span class="admin-hint">Pulsa un plato para editarlo</span></h3>
-          <div id="adminList" class="admin-list"></div>
-        </div>
+        <button type="button" class="admin-back-link" id="adminBackLogin">← Volver a la web</button>
       </div>
     </div>
-  </div>
+
+    <div class="admin-shell admin-hidden" id="adminDashboard">
+      <aside class="admin-sidebar">
+        <div class="brand"><span class="brand-mark">A</span><span class="brand-name">Northwestmad</span></div>
+        <p class="admin-side-label">Panel</p>
+        <div class="admin-nav">
+          <div class="admin-nav-item active">Carta <span id="dishCount">0</span></div>
+          <button type="button" class="admin-nav-item" id="newDishNav">+ Nuevo plato</button>
+        </div>
+        <div class="admin-sidebar-foot">
+          <button type="button" class="admin-nav-item" id="adminBackSite">← Volver a la web</button>
+          <button type="button" class="admin-nav-item" id="adminLogout">Cerrar sesión</button>
+        </div>
+      </aside>
+
+      <main class="admin-main">
+        <header class="admin-main-head">
+          <div>
+            <p class="eyebrow">Gestión de carta</p>
+            <h2>Tu <em>carta</em></h2>
+          </div>
+          <button type="button" class="btn btn-primary" id="newDishTop">+ Nuevo plato</button>
+        </header>
+
+        <div class="admin-workspace">
+          <section class="admin-list-wrap">
+            <div class="admin-list-head">
+              <h3>Platos <span id="listCount">0</span></h3>
+              <label class="admin-search">
+                <span aria-hidden="true">⌕</span>
+                <input type="search" id="dishSearch" placeholder="Buscar plato, ingrediente o alergia..." />
+              </label>
+            </div>
+            <div id="adminList" class="admin-list"></div>
+          </section>
+
+          <section class="admin-editor-wrap">
+            <form id="dishForm" class="admin-form admin-add">
+              <div class="admin-editor-head">
+                <h3 id="editorTitle">Añadir plato</h3>
+                <button type="button" class="btn-muted btn-small admin-hidden" id="cancelEdit">Cancelar edición</button>
+              </div>
+              <div class="admin-img-preview">
+                <img id="imgPreview" src="${FALLBACK_IMG}" alt="Vista previa del plato" onerror="this.src='${FALLBACK_IMG}'" />
+                <span>Vista previa</span>
+              </div>
+              <div class="form-row">
+                <label><span>Nombre</span><input name="name" required placeholder="Nombre del plato" /></label>
+                <label><span>Precio</span><input name="price" required placeholder="18€" /></label>
+              </div>
+              <div class="form-row">
+                <label><span>Etiqueta</span><input name="tag" placeholder="Especialidad" /></label>
+                <label><span>Imagen URL</span><input name="img" required placeholder="https://..." /></label>
+              </div>
+              <label><span>Descripción</span><textarea name="description" required rows="3" placeholder="Descripción del plato"></textarea></label>
+              <label><span>Ingredientes <small>(separados por comas)</small></span><textarea name="ingredients" rows="2" placeholder="Tomate, aceite de oliva, albahaca"></textarea></label>
+              <label><span>Alergias <small>(separadas por comas)</small></span><input name="allergens" placeholder="Gluten, lácteos, frutos secos" /></label>
+              <div class="admin-actions">
+                <button type="submit" class="btn btn-primary" id="saveDish">Añadir plato</button>
+                <button type="button" class="btn-danger admin-hidden" id="deleteCurrent">Eliminar plato</button>
+              </div>
+              <p class="form-note" id="adminDishNote"></p>
+            </form>
+          </section>
+        </div>
+      </main>
+    </div>
+  </section>
 `
 
 // Dish detail
@@ -399,26 +428,34 @@ renderMenu()
 const renderAdminList = () => {
   const list = document.getElementById('adminList')
   if (!list) return
-  list.innerHTML = dishes.map((d, i) => `
-    <div class="admin-item">
+  const search = document.getElementById('dishSearch')
+  const q = (search?.value || '').trim().toLowerCase()
+  const filtered = dishes.map((d, i) => ({ d, i })).filter(({ d }) => !q ||
+    [d.name, d.tag, d.description, ...d.ingredients, ...d.allergens].join(' ').toLowerCase().includes(q))
+  document.getElementById('dishCount').textContent = dishes.length
+  document.getElementById('listCount').textContent = filtered.length
+  list.innerHTML = filtered.length ? filtered.map(({ d, i }) => `
+    <div class="admin-item ${editingIndex === i ? 'selected' : ''}">
       <button type="button" class="admin-item-main" data-index="${i}">
-        <strong>${esc(d.name)}</strong>
-        <span>${esc(d.price)} · ${esc(d.tag)}</span>
-        <span class="admin-item-detail">${d.allergens.length ? `Alergias: ${esc(d.allergens.join(', '))}` : 'Sin alérgenos declarados'}</span>
+        <span class="admin-item-thumb"><img src="${esc(d.img)}" alt="" loading="lazy" onerror="this.src='${FALLBACK_IMG}'" /></span>
+        <span class="admin-item-copy">
+          <strong>${esc(d.name)}</strong>
+          <span>${esc(d.price)} · ${esc(d.tag)}</span>
+          <span class="admin-item-detail">${d.allergens.length ? `Alergias: ${esc(d.allergens.join(', '))}` : 'Sin alérgenos declarados'}</span>
+        </span>
       </button>
       <div class="admin-item-actions">
         <button type="button" class="admin-edit" data-index="${i}">Editar</button>
         <button type="button" class="admin-del" data-index="${i}">Eliminar</button>
       </div>
     </div>
-  `).join('') || '<p class="admin-empty">No hay platos en la carta.</p>'
+  `).join('') : '<p class="admin-empty">No se encontraron platos.</p>'
   list.querySelectorAll('.admin-item-main, .admin-edit').forEach(btn => btn.addEventListener('click', () => openDishEditor(Number(btn.dataset.index))))
   list.querySelectorAll('.admin-del').forEach(btn => btn.addEventListener('click', () => deleteDish(Number(btn.dataset.index))))
 }
 
 // Admin
-const adminModal = document.getElementById('adminModal')
-const adminClose = document.getElementById('adminClose')
+const adminApp = document.getElementById('adminApp')
 const adminAuth = document.getElementById('adminAuth')
 const adminDashboard = document.getElementById('adminDashboard')
 const adminLoginForm = document.getElementById('adminLoginForm')
@@ -430,6 +467,11 @@ const cancelEdit = document.getElementById('cancelEdit')
 const deleteCurrent = document.getElementById('deleteCurrent')
 const adminDishNote = document.getElementById('adminDishNote')
 const adminLogout = document.getElementById('adminLogout')
+const adminBackSite = document.getElementById('adminBackSite')
+const adminBackLogin = document.getElementById('adminBackLogin')
+const newDishTop = document.getElementById('newDishTop')
+const newDishNav = document.getElementById('newDishNav')
+const dishSearch = document.getElementById('dishSearch')
 const imgPreview = document.getElementById('imgPreview')
 const field = (name) => dishForm.elements.namedItem(name)
 
@@ -452,6 +494,7 @@ const resetEditor = () => {
   deleteCurrent.classList.add('admin-hidden')
   syncPreview()
   setNote('')
+  renderAdminList()
 }
 
 const openDishEditor = (index) => {
@@ -472,9 +515,13 @@ const openDishEditor = (index) => {
   deleteCurrent.classList.remove('admin-hidden')
   setNote('')
   syncPreview()
-  if (!adminModal.classList.contains('open')) openAdmin()
-  dishForm.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  field('name').focus({ preventScroll: true })
+  if (window.location.hash !== '#admin') window.location.hash = '#admin'
+  else syncAdmin()
+  renderAdminList()
+  requestAnimationFrame(() => {
+    document.querySelector(`#adminList [data-index="${index}"]`)?.scrollIntoView({ block: 'nearest' })
+    field('name').focus({ preventScroll: true })
+  })
 }
 
 const deleteDish = (index) => {
@@ -483,45 +530,34 @@ const deleteDish = (index) => {
   if (!window.confirm(`¿Eliminar "${d.name}" de la carta?`)) return
   dishes.splice(index, 1)
   saveDishes(dishes)
-  if (editingIndex === index) {
-    resetEditor()
-    setNote('Plato eliminado.', 'success')
-  } else {
-    if (editingIndex !== null && index < editingIndex) editingIndex -= 1
-    setNote('Plato eliminado.', 'success')
-  }
+  if (editingIndex === index) resetEditor()
+  else if (editingIndex !== null && index < editingIndex) editingIndex -= 1
+  setNote('Plato eliminado.', 'success')
   renderMenu()
   renderAdminList()
 }
 
 const syncAdmin = () => {
+  const active = window.location.hash === '#admin'
+  adminApp.classList.toggle('open', active)
+  adminApp.setAttribute('aria-hidden', String(!active))
+  document.body.classList.toggle('admin-open', active)
   adminAuth.classList.toggle('admin-hidden', isAdmin)
   adminDashboard.classList.toggle('admin-hidden', !isAdmin)
   if (!isAdmin) resetEditor()
+  if (active) adminApp.scrollTop = 0
+  else closeDishDetail()
   renderMenu()
   renderAdminList()
 }
-const openAdmin = () => { adminModal.classList.add('open'); adminModal.setAttribute('aria-hidden', 'false'); syncAdmin() }
-const closeAdmin = () => {
-  adminModal.classList.remove('open')
-  adminModal.setAttribute('aria-hidden', 'true')
+
+const exitAdmin = () => {
   if (window.location.hash === '#admin') history.replaceState(null, '', location.pathname + location.search)
+  syncAdmin()
 }
 
-adminClose.addEventListener('click', closeAdmin)
-adminModal.addEventListener('click', (e) => { if (e.target === adminModal) closeAdmin() })
-document.addEventListener('keydown', (e) => {
-  if (e.key !== 'Escape') return
-  if (dishModal.classList.contains('open')) closeDishDetail()
-  else closeAdmin()
-})
-
-const syncAdminRoute = () => {
-  if (window.location.hash === '#admin') openAdmin()
-  else if (adminModal.classList.contains('open')) closeAdmin()
-}
-window.addEventListener('hashchange', syncAdminRoute)
-syncAdminRoute()
+window.addEventListener('hashchange', syncAdmin)
+syncAdmin()
 
 adminLoginForm.addEventListener('submit', (e) => {
   e.preventDefault()
@@ -557,16 +593,26 @@ dishForm.addEventListener('submit', (e) => {
   resetEditor()
   setNote(wasEditing ? 'Cambios guardados.' : 'Plato añadido a la carta.', 'success')
   renderMenu()
-  renderAdminList()
 })
 
-cancelEdit.addEventListener('click', () => { resetEditor(); dishForm.scrollIntoView({ behavior: 'smooth', block: 'start' }) })
+dishSearch.addEventListener('input', renderAdminList)
+cancelEdit.addEventListener('click', resetEditor)
+newDishTop.addEventListener('click', resetEditor)
+newDishNav.addEventListener('click', resetEditor)
 deleteCurrent.addEventListener('click', () => { if (editingIndex !== null) deleteDish(editingIndex) })
+adminBackSite.addEventListener('click', exitAdmin)
+adminBackLogin.addEventListener('click', exitAdmin)
 
 adminLogout.addEventListener('click', () => {
   isAdmin = false
   sessionStorage.removeItem(ADMIN_KEY)
   syncAdmin()
+})
+
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return
+  if (dishModal.classList.contains('open')) closeDishDetail()
+  else if (adminApp.classList.contains('open')) exitAdmin()
 })
 
 // Navigation
